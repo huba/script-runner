@@ -1,4 +1,4 @@
-{ScrollView} = require 'atom'
+{ScrollView} = require 'atom-space-pen-views'
 Convert = require('ansi-to-html')
 
 module.exports =
@@ -22,7 +22,7 @@ class ScriptRunnerView extends ScrollView
   constructor: (title) ->
     super
     
-    @command "run:copy", => @copyToClipboard()
+    atom.commands.add this, "run:copy": (event) => @copyToClipboard()
     
     @convert = new Convert({escapeXML: true})
     @_header = @find('.header')
