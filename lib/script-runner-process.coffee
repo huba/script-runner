@@ -4,28 +4,21 @@ Shellwords = require('shellwords')
 
 module.exports =
 class ScriptRunnerProcess
-  @run: (view, cmd, env, editor) ->
-    scriptRunnerProcess = new ScriptRunnerProcess(view)
-    
-    scriptRunnerProcess.execute(cmd, env, editor)
-    
-    return scriptRunnerProcess
-  
-  constructor: (view) ->
-    @view = view
+  constructor: ->
+    @_view = atom.views.getView(this)
     @child = null
-  
-  detach: ->
-    @view = null
   
   stop: (signal = 'SIGINT') ->
     if @child
       console.log("Sending", signal, "to child", @child, "pid", @child.pid)
       process.kill(-@child.pid, signal)
-      if @view
-        @view.append('<Sending ' + signal + '>', 'stdin')
+      if @_view
+        @_view.append('<Sending ' + signal + '>', 'stdin')
   
   execute: (cmd, env, editor) ->
+    @_view.clear()
+    @_view.setTitle(editor.getTitle())
+    
     cwd = atom.project.path
 
     # Save the file if it has been modified:
@@ -47,30 +40,30 @@ class ScriptRunnerProcess
     # Spawn the child process:
     @child = ChildProcess.spawn(args[0], args.slice(1), cwd: cwd, env: env, detached: true)
     
-    @view.header('Running: ' + cmd + ' (pgid ' + @child.pid + ')')
+    @_view.header('Running: ' + cmd + ' (pgid ' + @child.pid + ')')
     
     # Handle various events relating to the child process:
     @child.stderr.on 'data', (data) =>
-      if @view?
-        @view.append(data, 'stderr')
-        @view.scrollToBottom()
+      if @_view?
+        @_view.append(data, 'stderr')
+        @_view.scrollToBottom()
     
     @child.stdout.on 'data', (data) =>
-      if @view?
-        @view.append(data, 'stdout')
-        @view.scrollToBottom()
+      if @_view?
+        @_view.append(data, 'stdout')
+        @_view.scrollToBottom()
     
     @child.on 'close', (code, signal) =>
       #console.log("process", args, "exit", code, signal)
       @child = null
-      if @view
+      if @_view
         duration = ' after ' + ((new Date - startTime) / 1000) + ' seconds'
         if signal
-          @view.footer('Exited with signal ' + signal + duration)
+          @_view.footer('Exited with signal ' + signal + duration)
         else
           # Sometimes code seems to be null too, not sure why, perhaps a bug in node.
           code ||= 0
-          @view.footer('Exited with status ' + code + duration)
+          @_view.footer('Exited with status ' + code + duration)
     
     startTime = new Date
     

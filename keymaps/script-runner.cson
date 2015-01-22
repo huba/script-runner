@@ -7,16 +7,16 @@
 
 # For more detailed documentation see
 # https://atom.io/docs/latest/advanced/keymaps
-'.platform-darwin .workspace .editor':
+'.platform-darwin atom-workspace atom-text-editor':
   'ctrl-x': 'run:script'
 
-'.platform-darwin .workspace':
+'.platform-darwin atom-workspace':
   'ctrl-c': 'run:terminate'
 
-'.platform-linux .workspace .editor':
+'.platform-linux atom-workspace atom-text-editor':
   'alt-x': 'run:script'
 
-'.platform-linux .workspace':
+'.platform-linux atom-workspace':
   'alt-c': 'run:terminate'
 
 '.platform-darwin .script-runner':

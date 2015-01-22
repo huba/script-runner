@@ -26,6 +26,9 @@ class ScriptRunner
     # keeps track of runners as {editor: editor, view: ScriptRunnerView, process: ScriptRunnerProcess}
     @runnerPane = null
     
+    #register the view
+    atom.views.addViewProvider ScriptRunnerProcess, ScriptRunnerView.viewFactory
+    
     # register commands
     atom.commands.add 'atom-workspace',
       'run:terminate': (event) => @stop()
@@ -72,8 +75,17 @@ class ScriptRunner
           runner.process.detach()
           runner.process = null
 
-  createRunnerView: (editor) ->
-    if not @pane?
+  createRunner: (editor) ->
+    if editor.runner?
+      return editor.runner
+    
+    else
+      runner = new ScriptRunnerProcess()
+      
+      return runner
+  
+  createPane: ->
+    unless @pane?
       # creates a new pane if there isn't one yet
       @pane = atom.workspace.getActivePane().splitRight()
       @pane.onDidDestroy () =>
@@ -84,17 +96,6 @@ class ScriptRunner
         # kill the process of the removed view and scratch it from the array
         runner = @getRunnerBy(evt.item)
         @killProcess(runner, true)
-    
-    runner = @getRunnerBy(editor, 'editor')
-    
-    if not runner?
-      runner = {editor: editor, view: new ScriptRunnerView(editor.getTitle()), process: null}
-      @runners.push(runner)
-    
-    else
-      runner.view.setTitle(editor.getTitle()) # if it changed
-    
-    return runner
 
   run: (editor)->
     return unless editor?
@@ -105,15 +106,14 @@ class ScriptRunner
       alert("Not sure how to run '#{path}' :/")
       return false
     
-    runner = @createRunnerView(editor)
-    @killProcess(runner, true)
+    @createPane()
+    runner = @createRunner(editor)
+    view = atom.views.getView(runner)
     
-    @pane.activateItem(runner.view)
+    @pane.activateItem(view)
     
-    runner.view.clear()
-    # In the future it may be useful to support multiple runner views:
     @fetchShellEnvironment (env) =>
-      runner.process = ScriptRunnerProcess.run(runner.view, cmd, env, editor)
+      runner.execute(cmd, env, editor)
 
   stop: ->
     runner = @getRunnerBy(@pane.getActiveItem())

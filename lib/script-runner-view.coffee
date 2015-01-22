@@ -4,12 +4,16 @@ Convert = require('ansi-to-html')
 module.exports =
 class ScriptRunnerView extends ScrollView
   atom.deserializers.add(this)
+  
+  @viewFactory: ->
+    return new ScriptRunnerView()
 
   @deserialize: ({title, header, output, footer}) ->
-    view = new ScriptRunnerView(title)
+    view = new ScriptRunnerView()
     view._header.html(header)
     view._output.html(output)
     view._footer.html(footer)
+    view.setTitle(title)
     return view
 
   @content: ->
@@ -19,16 +23,14 @@ class ScriptRunnerView extends ScrollView
       @pre class: 'output'
       @div class: 'footer'
 
-  constructor: (title) ->
-    super
-    
+  initialize: ->
+    # super
     atom.commands.add this, "run:copy": (event) => @copyToClipboard()
     
     @convert = new Convert({escapeXML: true})
     @_header = @find('.header')
     @_output = @find('.output')
     @_footer = @find('.footer')
-    @setTitle(title)
 
   serialize: ->
     deserializer: 'ScriptRunnerView'
@@ -39,11 +41,12 @@ class ScriptRunnerView extends ScrollView
 
   copyToClipboard: ->
     atom.clipboard.write(window.getSelection().toString())
-
+  
   getTitle: ->
-    "Script Runner: #{@title}"
-
+    return "Script Runner: #{@title}"
+  
   setTitle: (title) ->
+    #TODO: Somehow force the tab title to update too.
     @title = title
     @find('h1').html(@getTitle())
 
