@@ -28,8 +28,10 @@ class ScriptRunner
     
     # register commands
     atom.commands.add 'atom-workspace',
-      'run:script': (event) => @run(),
       'run:terminate': (event) => @stop()
+    
+    atom.commands.add 'atom-text-editor',
+      'run:script': (event) => @run(event.currentTarget.getModel())
 
   fetchShellEnvironment: (callback) ->
     # I tried using ChildProcess.execFile but there is no way to set detached and this causes the child shell to lock up. This command runs an interactive login shell and executes the export command to get a list of environment variables. We then use these to run the script:
@@ -94,8 +96,7 @@ class ScriptRunner
     
     return runner
 
-  run: ->
-    editor = atom.workspace.getActiveEditor()
+  run: (editor)->
     return unless editor?
     
     path = editor.getPath()
