@@ -4,6 +4,69 @@
 // for a full listing of what's available.
 @import "ui-variables";
 
+.script-runner-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  
+  &.down, &.up {
+    flex-direction: row;
+    
+    .script-runner {height: 80vh;}
+  }
+  
+  &.left, &.right {
+    flex-direction: row;
+    
+    .script-runner {width: 45vw;}
+  }
+  
+  a {
+    order: 1;
+    display: block;
+    margin: none;
+    margin-left: auto;
+    padding: 5px 20px;
+  }
+  
+  label {
+    order: 0;
+    display: block;
+    margin: 0px;
+    padding: 5px 20px;
+    
+    &:hover {
+      color: #fff;
+    }
+  }
+  
+  input[type="radio"] {
+    display: none;
+    
+    &:checked + label {
+      background: #fff;
+      color: black;
+      // font-weight: bold;
+    }
+    
+    &:checked + label +.script-runner {
+      display: block;
+    }
+  }
+  
+  .script-runner {
+    flex-grow: 1;
+    display: none;
+    order: 2;
+    width: 100%;
+  }
+  
+  &.minimized > input[type="radio"]:checked {
+    & + label {background: #2f2f2f; color: #7f7f7f}
+    & + label + .script-runner {display: none;}
+  }
+}
+
 .script-runner {
   background: #fff;
   padding: 0px 20px;

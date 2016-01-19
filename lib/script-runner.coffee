@@ -2,6 +2,7 @@
 
 ScriptRunnerProcess = require './script-runner-process'
 ScriptRunnerView = require './script-runner-view'
+ScriptRunnerContainerView = require './script-runner-container-view'
 
 ChildProcess = require 'child_process'
 ShellEnvironment = require 'shell-environment'
@@ -32,6 +33,7 @@ class ScriptRunner
     @runners = [] # this is just for keeping track of runners
     # keeps track of runners as {editor: editor, view: ScriptRunnerView, process: ScriptRunnerProcess}
     @runnerPane = null
+    @container = null
     
     # register commands
     atom.commands.add 'atom-workspace',
@@ -58,27 +60,29 @@ class ScriptRunner
           runner.process = null
 
   createRunnerView: (editor) ->
-    if not @pane?
+    if not @container?
+      @container = new ScriptRunnerContainerView {orientation: atom.config.get 'script-runner.splitDirection'}
       # creates a new pane if there isn't one yet
       switch atom.config.get('script-runner.splitDirection')
-        when 'up' then @pane = atom.workspace.getActivePane().splitUp()
-        when 'down' then @pane = atom.workspace.getActivePane().splitDown()
-        when 'left' then @pane = atom.workspace.getActivePane().splitLeft()
-        when 'right' then @pane = atom.workspace.getActivePane().splitRight()
+        when 'up' then atom.workspace.addTopPanel(@container)
+        when 'down' then atom.workspace.addBottomPanel({item: @container})
+        when 'left' then atom.workspace.addLeftPanel(@container)
+        when 'right' then atom.workspace.addRightPanel(@container)
       
-      @pane.onDidDestroy () =>
-        @killAllProcesses(true)
-        @pane = null
-      
-      @pane.onWillDestroyItem (evt) =>
-        # kill the process of the removed view and scratch it from the array
-        runner = @getRunnerBy(evt.item)
-        @killProcess(runner, true)
+      # @pane.onDidDestroy () =>
+      #   @killAllProcesses(true)
+      #   @pane = null
+      #
+      # @pane.onWillDestroyItem (evt) =>
+      #   # kill the process of the removed view and scratch it from the array
+      #   runner = @getRunnerBy(evt.item)
+      #   @killProcess(runner, true)
     
     runner = @getRunnerBy(editor, 'editor')
     
     if not runner?
       runner = {editor: editor, view: new ScriptRunnerView(editor.getTitle()), process: null}
+      @container.addRunnerView(runner.view)
       @runners.push(runner)
     
     else
@@ -99,7 +103,8 @@ class ScriptRunner
     runner = @createRunnerView(editor)
     @killProcess(runner, true)
     
-    @pane.activateItem(runner.view)
+    @container.activateRunner(runner.view.index)
+    @container.maximize()
     
     runner.view.clear()
     
@@ -110,10 +115,10 @@ class ScriptRunner
         throw new Error error
 
   stop: ->
-    unless @pane
+    unless @container
       return
     
-    runner = @getRunnerBy(@pane.getActiveItem())
+    runner = @getRunnerBy(@container.getActiveItem())
     @killProcess(runner)
 
   commandFor: (editor) ->
